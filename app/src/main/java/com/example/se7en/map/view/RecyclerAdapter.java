@@ -8,15 +8,16 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.example.se7en.map.R;
+import com.example.se7en.map.model.Place;
 
 import java.util.List;
 
 
 public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.MyViewHolder> {
     private Context mContext;
-    private List<String> mDatas;
+    private List<Place> mDatas;
 
-    public RecyclerAdapter(Context context, List<String> datas) {
+    public RecyclerAdapter(Context context, List<Place> datas) {
         mContext = context;
         mDatas = datas;
     }
@@ -30,7 +31,9 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.MyView
 
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
-        holder.tv.setText(mDatas.get(position));
+        Place place = mDatas.get(position);
+
+        holder.tv.setText(place.name);
     }
 
     @Override

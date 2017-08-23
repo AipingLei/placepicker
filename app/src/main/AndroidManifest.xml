@@ -30,7 +30,7 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name="com.example.se7en.map.MapsActivity">
+            android:name="com.example.se7en.map.PlacePickActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

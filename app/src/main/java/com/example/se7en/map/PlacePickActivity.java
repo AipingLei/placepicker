@@ -1,11 +1,24 @@
 package com.example.se7en.map;
 
+import android.content.Context;
+import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.View;
+import android.widget.RelativeLayout;
+import android.widget.SearchView;
+import android.widget.TextView;
 
+import com.example.se7en.map.model.Place;
+import com.example.se7en.map.view.MapContainer;
 import com.example.se7en.map.view.RecyclerAdapter;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -16,23 +29,78 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
+import butterknife.Bind;
+import butterknife.ButterKnife;
 
-    private MapView mapView;
-    private GoogleMap mGoogleMap;
-    private ArrayList<String> mDatas;
-    private RecyclerView mRecyclerView;
+public class PlacePickActivity extends AppCompatActivity{
+
+    @Bind(R.id.search_title)
+    TextView searchTitle;
+    @Bind(R.id.pick_done)
+    TextView pickDone;
+    @Bind(R.id.searchView)
+    SearchView searchView;
+    @Bind(R.id.search_rl)
+    RelativeLayout searchRl;
+    @Bind(R.id.my_toolbar)
+    Toolbar myToolbar;
+//    @Bind(R.id.map_view)
+//    MapView mapView;
+    @Bind(R.id.recyclerview)
+    RecyclerView mRecyclerView;
+    @Bind(R.id.search_appbar)
+    AppBarLayout searchAppbar;
+    @Bind(R.id.search_coordinator)
+    CoordinatorLayout searchCoordinator;
+    @Bind(R.id.search_collapsing)
+    CollapsingToolbarLayout searchCollapsing;
+
+    public static  final  int GOOGLE_MAP = 0;
+
+    public static  final  int GD_MAP =1 ;
+
+    public static  final  String START_TYPE = "start_type" ;
+    //private GoogleMap mGoogleMap;
+    private ArrayList<Place> mDatas;
+
+    private MapContainer mMapContainer;
     RecyclerAdapter mAdapter;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        mapView = (MapView) findViewById(R.id.map_view);
-        mapView.onCreate(savedInstanceState);
-        mapView.getMapAsync(this);
-        initData();
-        mRecyclerView = (RecyclerView)findViewById(R.id.recyclerview);
+        ButterKnife.bind(this);
+
+//        mapView = (MapView) findViewById(R.id.map_view);
+//        mapView.onCreate(savedInstanceState);
+//        mapView.getMapAsync(this);
+        searchView.setOnSearchClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                searchTitle.setVisibility(View.GONE);
+                pickDone.setVisibility(View.GONE);
+
+                searchCollapsing.setMinimumHeight(0);
+                searchCollapsing.setVisibility(View.GONE);
+                Log.e("test", "test");
+            }
+        });
+
+        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
+            @Override
+            public boolean onClose() {
+                searchTitle.setVisibility(View.VISIBLE);
+                pickDone.setVisibility(View.VISIBLE);
+
+                searchCollapsing.setMinimumHeight(300);
+                searchCollapsing.setVisibility(View.VISIBLE);
+                return false;
+            }
+        });
+
+        initPlaces();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(mRecyclerView.getContext()));
         mRecyclerView.setAdapter(mAdapter = new RecyclerAdapter(mRecyclerView.getContext(), mDatas));
     }
@@ -40,43 +108,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onPause() {
         super.onPause();
-        mapView.onPause();
+        mMapContainer.onPause();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mapView.onDestroy();
+        mMapContainer.onDestroy();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        mapView.onResume();
+        mMapContainer.onResume();
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mGoogleMap = googleMap;
-        LatLng sydney = new LatLng(-34, 151);
-        mGoogleMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
-    }
+    protected void initPlaces() {
 
-    protected void initData() {
-        mDatas = new ArrayList<>();
-        for (int i = 'A'; i < 'Z'; i++) {
-            mDatas.add("Google" + (char) i);
-        }
     }
 
     protected Location mLastLocation;
@@ -104,7 +152,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 //                        }
 //
 //                        if (!Geocoder.isPresent()) {
-//                            Toast.makeText(MapsActivity.this,
+//                            Toast.makeText(PlacePickActivity.this,
 //                                    R.string.no_geocoder_available,
 //                                    Toast.LENGTH_LONG).show();
 //                            return;
@@ -137,4 +185,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 //
 //        }
 //    }
+
+    public static void start(Context context, int type){
+        Intent intent = new Intent();
+        intent.putExtra(START_TYPE,type);
+        intent.setClass(context,PlacePickActivity.class);
+        context.startActivity(intent);
+    }
 }

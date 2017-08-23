@@ -5,4 +5,10 @@
     <string name="invalid_lat_long_used">invalid_lat_long_used</string>
     <string name="no_address_found">no_address_found</string>
     <string name="address_found">address_found</string>
+    <string name="menu_search">search</string>
+    <string name="permission_rationale">Location permission is needed for core functionality</string>
+    <string name="permission_denied_explanation">Permission was denied, but is needed for core
+        functionality.</string>
+    <string name="no_location_data_provided">No location data provided</string>
+
 </resources>
