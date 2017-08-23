@@ -8,6 +8,6 @@ public interface IPlaceListener {
 
     void onPlaceFetched(Place place);
 
-    void onError(String errorMessage);
+    void onPlaceFetchError(Exception errorMessage);
 
 }

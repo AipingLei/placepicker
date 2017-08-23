@@ -13,9 +13,9 @@ import android.content.Context;
 */
 public interface IPlaceProvider {
 
-    void fetchCurrentPlace(Activity activity, IPlaceListener listener);
+    void fetchCurrentPlace(IPlaceListener listener);
 
-    void searchPlaces(Context context, double latitude, double longitude, IPlacesListener listener);
+    void searchPlaces(double latitude, double longitude, IPlacesListener listener);
 
     void destroyed();
 

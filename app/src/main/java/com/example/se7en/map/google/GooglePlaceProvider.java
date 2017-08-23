@@ -3,7 +3,6 @@ package com.example.se7en.map.google;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.location.Address;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,11 +16,11 @@ import com.example.se7en.map.IPlaceProvider;
 import com.example.se7en.map.IPlacesListener;
 import com.example.se7en.map.model.Place;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -33,6 +32,8 @@ import java.util.List;
  * version: 1.0
 */
 public class GooglePlaceProvider implements IPlaceProvider{
+
+    private Activity mActivity;
     /**
      * Receiver registered with this activity to get the response from FetchAddressIntentService.
      */
@@ -42,12 +43,6 @@ public class GooglePlaceProvider implements IPlaceProvider{
      */
     private FusedLocationProviderClient mFusedLocationClient;
 
-    /**
-     * The formatted location address.
-     */
-    private String mAddressOutput;
-
-    private boolean mAddressRequested;
 
     public static final  int LATITUDE = 0;
 
@@ -55,16 +50,17 @@ public class GooglePlaceProvider implements IPlaceProvider{
 
     private IPlacesListener mPlaceListener;
 
-    public GooglePlaceProvider(Context context){
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
-
+    public GooglePlaceProvider(Activity activity){
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(activity);
+        mActivity = activity;
+        mResultReceiver = new AddressResultReceiver(new Handler());
     }
 
     @SuppressWarnings("MissingPermission")
     @Override
-    public void fetchCurrentPlace(Activity activity, final IPlaceListener listener) {
+    public void fetchCurrentPlace(final IPlaceListener listener) {
         mFusedLocationClient.getLastLocation()
-                .addOnCompleteListener(activity, new OnCompleteListener<Location>() {
+                .addOnCompleteListener(mActivity, new OnCompleteListener<Location>() {
                     @Override
                     public void onComplete(@NonNull Task<Location> task) {
                         Location location = task.getResult();
@@ -72,26 +68,30 @@ public class GooglePlaceProvider implements IPlaceProvider{
                             Place place = new Place();
                             place.latitude = location.getLatitude();
                             place.longitude = location.getLongitude();
+                            listener.onPlaceFetched(place);
                         } else {
-                            listener.onError(task.getException().toString());
+                            listener.onPlaceFetchError(task.getException());
                         }
                     }
                 });
     }
 
     @Override
-    public void searchPlaces(Context context, double latitude, double longitude, IPlacesListener listener) {
+    public void searchPlaces(double latitude, double longitude, IPlacesListener listener) {
         mPlaceListener = listener;
         double[] location = new double[2];
+        //33.960089, -118.130957
         location[LATITUDE] = latitude;
         location[LONGITUDE] = longitude;
-        startIntentService(context,location);
+//        location[LATITUDE] = 33.960089;
+//        location[LONGITUDE] = -118.130957;
+        startIntentService(mActivity,location);
 
     }
 
     @Override
     public void destroyed() {
-
+        mActivity = null;
     }
 
     @Override
@@ -138,14 +138,20 @@ public class GooglePlaceProvider implements IPlaceProvider{
                     List<Place> places = Place.getPlaceList
                             (resultData.getParcelableArrayList(Constants.RESULT_DATA_KEY));
                     if (places != null){
-                        mPlaceListener.onPlaceFetched(places);
+                        mPlaceListener.onPlacesFetched(places);
                     }else {
-                        mPlaceListener.onError("");
+                        mPlaceListener.onPlacesFetchError("");
                     }
                 }
             }
             // Reset. Enable the Fetch Address button and stop showing the progress bar.
-            mAddressRequested = false;
         }
+    }
+
+    protected void createLocationRequest() {
+        LocationRequest mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(10000);
+        mLocationRequest.setFastestInterval(5000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 }

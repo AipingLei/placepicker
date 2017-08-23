@@ -8,8 +8,8 @@ import java.util.List;
 
 public interface IPlacesListener {
 
-    void onPlaceFetched(List<Place> place);
+    void onPlacesFetched(List<Place> place);
 
-    void onError(String errorMsg);
+    void onPlacesFetchError(String errorMsg);
 
 }

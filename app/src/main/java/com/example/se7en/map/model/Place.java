@@ -18,6 +18,14 @@ public class Place {
 
     public double longitude;
 
+    public Place(){
+    }
+
+    public Place(double latitude,double longitude){
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+
     public static List<Place> getPlaceList(List<Parcelable> addresses){
         if (addresses == null || addresses.size() == 0){
             return  null;

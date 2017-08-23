@@ -15,11 +15,11 @@ import java.util.List;
 
 public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.MyViewHolder> {
     private Context mContext;
-    private List<Place> mDatas;
 
-    public RecyclerAdapter(Context context, List<Place> datas) {
+    private List<Place> mData;
+
+    public RecyclerAdapter(Context context) {
         mContext = context;
-        mDatas = datas;
     }
 
     @Override
@@ -31,14 +31,14 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.MyView
 
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
-        Place place = mDatas.get(position);
+        Place place = mData.get(position);
 
         holder.tv.setText(place.name);
     }
 
     @Override
     public int getItemCount() {
-        return mDatas.size();
+        return mData.size();
     }
 
     class MyViewHolder extends RecyclerView.ViewHolder {
@@ -48,5 +48,9 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.MyView
             super(view);
             tv = (TextView) view.findViewById(R.id.tv_num);
         }
+    }
+
+    public void setDatas(List<Place> mDatas) {
+        this.mData = mDatas;
     }
 }

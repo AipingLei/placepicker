@@ -7,11 +7,13 @@ import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.ViewGroup;
 
+import com.example.se7en.map.PlacePickActivity;
 import com.example.se7en.map.view.MapContainer;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -27,13 +29,13 @@ public class GoogleMapContainer implements MapContainer<MapView>,OnMapReadyCallb
 
     private MapView mMapView;
 
-    private Activity mActivity;
+    private PlacePickActivity mActivity;
 
     private GoogleMap mGoogleMap;
 
     private double[] mLocation;
 
-    public GoogleMapContainer(Activity aActivity){
+    public GoogleMapContainer(PlacePickActivity aActivity){
         mActivity = aActivity;
     }
 
@@ -47,13 +49,11 @@ public class GoogleMapContainer implements MapContainer<MapView>,OnMapReadyCallb
 
         mMapView = new MapView(mActivity);
         Resources r = mActivity.getResources();
-        int height = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 300, r.getDisplayMetrics());
-        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,height);
+        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
         mMapView.setLayoutParams(params);
         mMapView.setClickable(true);
         mMapView.setEnabled(true);
         mMapView.setFocusable(true);
-
 
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(this);
@@ -99,18 +99,29 @@ public class GoogleMapContainer implements MapContainer<MapView>,OnMapReadyCallb
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
-        moveToLocation(mLocation);
+        mActivity.onMapReady(this);
+        if (mLocation != null){
+            moveToLocation(mLocation[0],mLocation[1]);
+        }
     }
 
-    private void moveToLocation(double[] location) {
+    @Override
+    public void moveToLocation(double latitude, double longitude) {
         if (mGoogleMap == null){
-            mLocation = location;
+            mLocation = new double[2];
+            mLocation[0] = latitude;
+            mLocation[1] = longitude;
             return;
         }
-        if (location != null && location.length > 1){
-            LatLng sydney = new LatLng(location[0], location[1]);
-            mGoogleMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-            mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
-        }
+        LatLng place = new LatLng(latitude, longitude);
+        mGoogleMap.addMarker(new MarkerOptions().position(place));
+        // Construct a CameraPosition focusing on Mountain View and animate the camera to that position.
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .target(place)      // Sets the center of the map to Mountain View
+                .zoom(17)                   // Sets the zoom
+                .bearing(90)                // Sets the orientation of the camera to east
+                .tilt(30)                   // Sets the tilt of the camera to 30 degrees
+                .build();                   // Creates a CameraPosition from the builder
+        mGoogleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
     }
 }

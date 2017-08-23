@@ -28,4 +28,6 @@ public interface MapContainer<T extends View> {
 
     void onStop();
 
+    void moveToLocation(double latitude, double longitude);
+
 }

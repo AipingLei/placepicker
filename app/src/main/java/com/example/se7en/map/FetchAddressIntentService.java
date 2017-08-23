@@ -75,7 +75,7 @@ public class FetchAddressIntentService extends IntentService {
         }
 
         // Get the location passed to this service through an extra.
-        Location location = intent.getParcelableExtra(Constants.LOCATION_DATA_EXTRA);
+        double[] location = intent.getDoubleArrayExtra(Constants.LOCATION_DATA_EXTRA);
 
         // Make sure that the location data was really sent over through an extra. If it wasn't,
         // send an error error message and return.
@@ -106,10 +106,9 @@ public class FetchAddressIntentService extends IntentService {
             // surrounding the given latitude and longitude. The results are a best guess and are
             // not guaranteed to be accurate.
             addresses = geocoder.getFromLocation(
-                    location.getLatitude(),
-                    location.getLongitude(),
-                    // In this sample, we get just a single address.
-                    1);
+                    location[0],
+                    location[1],
+                    20);
         } catch (IOException ioException) {
             // Catch network or other I/O problems.
             errorMessage = getString(R.string.service_not_available);
@@ -118,8 +117,8 @@ public class FetchAddressIntentService extends IntentService {
             // Catch invalid latitude or longitude values.
             errorMessage = getString(R.string.invalid_lat_long_used);
             Log.e(TAG, errorMessage + ". " +
-                    "Latitude = " + location.getLatitude() +
-                    ", Longitude = " + location.getLongitude(), illegalArgumentException);
+                    "Latitude = " + location[0] +
+                    ", Longitude = " + location[1], illegalArgumentException);
         }
 
         // Handle case where no address was found.
@@ -131,6 +130,7 @@ public class FetchAddressIntentService extends IntentService {
             deliverResultToReceiver(Constants.FAILURE_RESULT, errorMessage);
         } else {
             ArrayList<Address> addressFragments = new ArrayList<>();
+            addressFragments.addAll(addresses);
             // Fetch the address lines using {@code getAddressLine},
             // join them, and send them to the thread. The {@link android.location.address}
             // class provides other options for fetching address details that you may prefer
