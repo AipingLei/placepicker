@@ -1,8 +1,6 @@
 package com.example.se7en.map;
 
 
-import android.app.Activity;
-import android.content.Context;
 
 /**
  * description: describe the class
@@ -13,9 +11,11 @@ import android.content.Context;
 */
 public interface IPlaceProvider {
 
-    void fetchCurrentPlace(IPlaceListener listener);
+    void fetchCurrentPlace(IPlacesListener listener);
 
     void searchPlaces(double latitude, double longitude, IPlacesListener listener);
+
+    void searchPlaces(String keyWords,  IPlacesListener listener);
 
     void destroyed();
 

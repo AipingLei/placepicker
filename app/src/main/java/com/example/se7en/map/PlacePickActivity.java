@@ -25,6 +25,7 @@ import android.widget.SearchView;
 import android.widget.TextView;
 
 import com.example.se7en.map.amap.AMapContainer;
+import com.example.se7en.map.amap.AMapPlaceProvider;
 import com.example.se7en.map.google.GoogleMapContainer;
 import com.example.se7en.map.google.GooglePlaceProvider;
 import com.example.se7en.map.model.Place;
@@ -36,7 +37,7 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-public class PlacePickActivity extends AppCompatActivity implements IPlaceListener, IPlacesListener, IMapReadyCallback {
+public class PlacePickActivity extends AppCompatActivity implements IPlacesListener, IMapReadyCallback {
 
     private static final String TAG = "PlacePickActivity";
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
@@ -122,7 +123,7 @@ public class PlacePickActivity extends AppCompatActivity implements IPlaceListen
             mMapContainer.onCreate(savedInstanceState);
         } else if (type == GD_MAP) {
             //TODO GD map
-            mPlaceProvider = new GooglePlaceProvider(this);
+            mPlaceProvider = new AMapPlaceProvider(this);
             mMapContainer = new AMapContainer(this);
             mMapContainer.onCreate(savedInstanceState);
         } else {
@@ -168,24 +169,13 @@ public class PlacePickActivity extends AppCompatActivity implements IPlaceListen
         mMapContainer.onResume();
     }
 
-    public static void start(Context context, int type) {
+    public static void show(Context context, int type) {
         Intent intent = new Intent();
         intent.putExtra(START_TYPE, type);
         intent.setClass(context, PlacePickActivity.class);
         context.startActivity(intent);
     }
 
-    @Override
-    public void onPlaceFetched(Place place) {
-        if (place != null) {
-            mPlaceProvider.searchPlaces(place.latitude, place.longitude, this);
-        }
-    }
-
-    @Override
-    public void onPlaceFetchError(Exception errorMessage) {
-        Log.e(TAG, "onPlaceFetchError" + errorMessage);
-    }
 
     @Override
     public void onPlacesFetched(List<Place> place) {

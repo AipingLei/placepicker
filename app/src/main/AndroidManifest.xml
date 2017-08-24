@@ -38,6 +38,8 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
+        <meta-data android:name="com.amap.api.v2.apikey"
+            android:value="@string/gd_maps_key"/>
 
         <activity
             android:name="com.example.se7en.map.PlacePickActivity">
@@ -52,9 +54,6 @@
             android:name=".FetchAddressIntentService"
             android:exported="false"/>
 
-        <meta-data android:name="com.amap.api.v2.apikey" android:value="key">
-            30d19d97b87ab5393a4c57a647536020
-        </meta-data>
     </application>
 
 </manifest>

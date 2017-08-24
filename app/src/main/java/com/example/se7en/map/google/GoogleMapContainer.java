@@ -48,7 +48,6 @@ public class GoogleMapContainer implements MapContainer<MapView>,OnMapReadyCallb
     public void onCreate(Bundle savedInstanceState) {
 
         mMapView = new MapView(mActivity);
-        Resources r = mActivity.getResources();
         ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
         mMapView.setLayoutParams(params);
         mMapView.setClickable(true);

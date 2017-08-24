@@ -2,6 +2,7 @@ package com.example.se7en.map.amap;
 
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.view.ViewGroup;
 
 import com.amap.api.maps2d.AMap;
 import com.amap.api.maps2d.MapView;
@@ -34,8 +35,11 @@ public class AMapContainer implements MapContainer<MapView> {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         mMapView = new MapView(mActivity);
+        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
+        mMapView.setLayoutParams(params);
         mMapView.onCreate(savedInstanceState);
         aMap = mMapView.getMap();
+        mActivity.onMapReady(this);
     }
 
     @Override
