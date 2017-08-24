@@ -73,7 +73,7 @@ public class Place {
         try {
             this.latitude = placeLikelihood.getPlace().getLatLng().latitude;
             this.longitude = placeLikelihood.getPlace().getLatLng().longitude;
-            this.name = placeLikelihood.toString();
+            this.name = placeLikelihood.getPlace().getName().toString();
             this.address = placeLikelihood.getPlace().getAddress().toString();
             this.country = placeLikelihood.getPlace().getLocale().getCountry();
         }catch (Exception e){

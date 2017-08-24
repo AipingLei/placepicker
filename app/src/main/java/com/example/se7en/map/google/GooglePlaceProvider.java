@@ -87,6 +87,7 @@ public class GooglePlaceProvider implements IPlaceProvider,OnCompleteListener<Pl
     @SuppressWarnings("MissingPermission")
     @Override
     public void fetchCurrentPlace(final IPlacesListener listener) {
+        mPlaceListener = listener;
         Task<PlaceLikelihoodBufferResponse> placeResult = mPlaceDetectionClient.getCurrentPlace(null);
         placeResult.addOnCompleteListener(this);
         //mPlaceDetectionClient.getCurrentPlace();

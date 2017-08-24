@@ -88,6 +88,8 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
         initPlaceProvider(savedInstanceState);
     }
 
+    private String mCurrentText;
+
     private void initView() {
         searchView.setOnSearchClickListener(new View.OnClickListener() {
             @Override
@@ -96,6 +98,22 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
                 pickDone.setVisibility(View.GONE);
                 searchCollapsing.setMinimumHeight(0);
                 searchCollapsing.setVisibility(View.GONE);
+            }
+        });
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if (mCurrentText == null || !mCurrentText.equals(newText)){
+                    mCurrentText = newText;
+                    mPlaceProvider.searchPlaces(newText,PlacePickActivity.this);
+                }
+                return false;
             }
         });
 
