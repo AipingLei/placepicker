@@ -5,6 +5,7 @@ package com.example.se7en.map.model;
 import android.location.Address;
 import android.os.Parcelable;
 
+import com.amap.api.location.AMapLocation;
 import com.amap.api.services.core.PoiItem;
 import com.google.android.gms.location.places.AutocompletePrediction;
 import com.google.android.gms.location.places.PlaceLikelihood;
@@ -20,17 +21,16 @@ public class Place {
 
     public double latitude;
 
-    private String country;
+    public String country;
 
     public double longitude;
 
+    public String city;
+
+    public String cityCode;
+
 
     public Place(){
-    }
-
-    public Place(double latitude,double longitude){
-        this.latitude = latitude;
-        this.longitude = longitude;
     }
 
     public Place  build(PoiItem poiItem){
@@ -39,6 +39,9 @@ public class Place {
         this.address = poiItem.getSnippet();
         this.latitude = poiItem.getLatLonPoint().getLatitude();
         this.longitude = poiItem.getLatLonPoint().getLongitude();
+        this.city = poiItem.getCityName();
+        this.cityCode = poiItem.getCityCode();
+
         return this;
     }
 
@@ -82,4 +85,20 @@ public class Place {
         return this;
     }
 
+    public Place build(AMapLocation aMapLocation) {
+        this.name = aMapLocation.getPoiName();
+        this.address = aMapLocation.getAddress();
+        this.latitude = aMapLocation.getLatitude();
+        this.longitude = aMapLocation.getLongitude();
+        this.country = aMapLocation.getCountry();
+        this.city = aMapLocation.getCity();
+        this.cityCode = aMapLocation.getCityCode();
+        return  this;
+    }
+
+    public Place build(AutocompletePrediction prediction) {
+        this.name = prediction.getPrimaryText(null).toString();
+        this.address = prediction.getFullText(null).toString();
+        return this;
+    }
 }

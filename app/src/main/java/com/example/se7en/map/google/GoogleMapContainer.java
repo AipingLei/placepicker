@@ -1,12 +1,10 @@
 package com.example.se7en.map.google;
 
 
-import android.app.Activity;
-import android.content.res.Resources;
 import android.os.Bundle;
-import android.util.TypedValue;
 import android.view.ViewGroup;
 
+import com.example.se7en.map.ICameraChangeListener;
 import com.example.se7en.map.PlacePickActivity;
 import com.example.se7en.map.view.MapContainer;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -122,5 +120,10 @@ public class GoogleMapContainer implements MapContainer<MapView>,OnMapReadyCallb
                 .tilt(30)                   // Sets the tilt of the camera to 30 degrees
                 .build();                   // Creates a CameraPosition from the builder
         mGoogleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+    }
+
+    @Override
+    public void setFocusChangeListener(ICameraChangeListener listener) {
+
     }
 }

@@ -3,6 +3,8 @@ package com.example.se7en.map.view;
 import android.os.Bundle;
 import android.view.View;
 
+import com.example.se7en.map.ICameraChangeListener;
+
 
 /**
  * description: describe the class
@@ -29,5 +31,7 @@ public interface MapContainer<T extends View> {
     void onStop();
 
     void moveToLocation(double latitude, double longitude);
+
+    void setFocusChangeListener(ICameraChangeListener listener);
 
 }

@@ -75,12 +75,11 @@ public class GooglePlaceProvider implements IPlaceProvider,OnCompleteListener<Pl
         mResultReceiver = new AddressResultReceiver(new Handler());
         // Construct a GeoDataClient.
         mGeoDataClient = Places.getGeoDataClient(activity, null);
-
         // Construct a PlaceDetectionClient.
         mPlaceDetectionClient = Places.getPlaceDetectionClient(activity, null);
 
         mPlaceFilter = new AutocompleteFilter.Builder()
-                .setTypeFilter(AutocompleteFilter.TYPE_FILTER_ADDRESS)
+                .setTypeFilter(AutocompleteFilter.TYPE_FILTER_NONE)
                 .build();
     }
 
@@ -136,8 +135,7 @@ public class GooglePlaceProvider implements IPlaceProvider,OnCompleteListener<Pl
                 List<Place> places = new ArrayList<>();
                 List<AutocompletePrediction> predictions =  DataBufferUtils.freezeAndClose(response);
                 for (AutocompletePrediction prediction : predictions) {
-                    Place place = new Place();
-                    place.name = prediction.getSecondaryText(null).toString();
+                    Place place = new Place().build(prediction);
                     places.add(place);
                 }
                 if (places.size() > 0){

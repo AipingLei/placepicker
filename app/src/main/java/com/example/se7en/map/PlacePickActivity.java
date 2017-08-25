@@ -17,6 +17,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -37,7 +38,7 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-public class PlacePickActivity extends AppCompatActivity implements IPlacesListener, IMapReadyCallback {
+public class PlacePickActivity extends AppCompatActivity implements IPlacesListener, IMapReadyCallback,RecyclerAdapter.OnItemClickListener,ICameraChangeListener {
 
     private static final String TAG = "PlacePickActivity";
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
@@ -70,7 +71,7 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
 
     public static final String START_TYPE = "start_type";
     //private GoogleMap mGoogleMap;
-    private List<Place> mDatas;
+    private List<Place> mData;
 
     private MapContainer mMapContainer;
 
@@ -101,6 +102,16 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
             }
         });
 
+        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) searchAppbar.getLayoutParams();
+        AppBarLayout.Behavior behavior = new AppBarLayout.Behavior();
+        behavior.setDragCallback(new AppBarLayout.Behavior.DragCallback() {
+            @Override
+            public boolean canDrag(AppBarLayout appBarLayout) {
+                return false;
+            }
+        });
+        params.setBehavior(behavior);
+
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -109,9 +120,11 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
 
             @Override
             public boolean onQueryTextChange(String newText) {
+                if (TextUtils.isEmpty(newText)) return false;
                 if (mCurrentText == null || !mCurrentText.equals(newText)){
                     mCurrentText = newText;
                     mPlaceProvider.searchPlaces(newText,PlacePickActivity.this);
+                    return true;
                 }
                 return false;
             }
@@ -127,30 +140,36 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
                 return false;
             }
         });
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(mRecyclerView.getContext()));
+
+        LinearLayoutManager layoutManager = new LinearLayoutManager(mRecyclerView.getContext());
+        mRecyclerView.setLayoutManager(layoutManager);
         mRecyclerView.setAdapter(mAdapter = new RecyclerAdapter(mRecyclerView.getContext()));
+        mAdapter.setClickListener(this);
 
     }
 
     private void initPlaceProvider(Bundle savedInstanceState) {
         Intent intent = getIntent();
-        int type = intent.getIntExtra(START_TYPE, GOOGLE_MAP);
+        int type = intent.getIntExtra(START_TYPE, GD_MAP);
         if (type == GOOGLE_MAP) {
             mPlaceProvider = new GooglePlaceProvider(this);
             mMapContainer = new GoogleMapContainer(this);
+            mMapContainer.setFocusChangeListener(this);
             mMapContainer.onCreate(savedInstanceState);
         } else if (type == GD_MAP) {
             //TODO GD map
             mPlaceProvider = new AMapPlaceProvider(this);
             mMapContainer = new AMapContainer(this);
+            mMapContainer.setFocusChangeListener(this);
             mMapContainer.onCreate(savedInstanceState);
         } else {
             Log.e(TAG, "none map service founded, you should define a map provider (GD_MAP or GOOGLE_MAP)");
         }
-
         if (mPlaceProvider == null) {
             return;
         }
+
+
 
         //mPlaceProvider.fetchCurrentPlace(this);
     }
@@ -197,10 +216,10 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
 
     @Override
     public void onPlacesFetched(List<Place> place) {
-        if (mRecyclerView == null) return;
-        mDatas = place;
-        mMapContainer.moveToLocation(mDatas.get(0).latitude, mDatas.get(0).longitude);
-        mAdapter.setDatas(mDatas);
+        if (mRecyclerView == null || place.size() == 0) return;
+        mData = place;
+        //mMapContainer.moveToLocation(mData.get(0).latitude, mData.get(0).longitude);
+        mAdapter.setData(mData);
         mRecyclerView.setVisibility(View.VISIBLE);
         mAdapter.notifyDataSetChanged();
     }
@@ -210,6 +229,49 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
 
     }
 
+    @Override
+    public void onMapReady(MapContainer container) {
+        View view = container.getMapView();
+        mapLayout.addView(view,view.getLayoutParams());
+    }
+
+    @Override
+    public void onPlaceClick(View view, int position) {
+        searchView.setIconified(true);
+        Place place = mAdapter.get(position);
+        eventProducer = mAdapter.hashCode();
+        mMapContainer.moveToLocation(place.latitude,place.longitude);
+    }
+    private int eventProducer = 0;
+
+    @Override
+    public void onCameraChangeFinish(double latitude, double longitude) {
+        if (eventProducer != mAdapter.hashCode()){
+            mPlaceProvider.searchPlaces(latitude,longitude,this);
+        }else {
+            eventProducer = 0;
+        }
+    }
+
+//    public Place find(double latitude, double longitude){
+//        if (mData == null) return  null;
+//        for (Place place: mData){
+//            if (place.latitude == latitude && place.longitude == longitude){
+//                return place;
+//            }
+//        }
+//        return  null;
+//    }
+
+
+    @Override
+    public void onBackPressed() {
+        if (!searchView.isIconified()) {
+            searchView.setIconified(true);
+        } else {
+            super.onBackPressed();
+        }
+    }
     /**
      * Return the current state of the permissions needed.
      */
@@ -324,9 +386,4 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
         }
     }
 
-    @Override
-    public void onMapReady(MapContainer container) {
-        View view = container.getMapView();
-        mapLayout.addView(view,view.getLayoutParams());
-    }
 }

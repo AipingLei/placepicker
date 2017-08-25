@@ -1,12 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content" >
+    android:layout_height="60dp"
+    android:id="@+id/rl_place"
+    >
 
     <TextView
-        android:id="@+id/tv_num"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:gravity="center"
-        android:text="1" />
-</LinearLayout>
+        android:id="@+id/tv_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="14dp"
+        android:text="midnight club"
+        android:layout_marginTop="13dp"
+        android:textColor="#ffffff"
+        android:gravity="center" />
+
+    <TextView
+        android:id="@+id/tv_address"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:layout_marginTop="1dp"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/tv_name"
+        android:layout_marginLeft="14dp"
+        android:text="Moscow, Russia"
+        android:textColor="#79798e"
+        android:gravity="center" />
+
+    <ImageView
+        android:id="@+id/iv_item_select"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="18dp"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:src="@drawable/radiobox_selected"
+        android:visibility="gone"
+        />
+</RelativeLayout>
