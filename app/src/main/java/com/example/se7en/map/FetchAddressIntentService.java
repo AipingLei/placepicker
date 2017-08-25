@@ -76,10 +76,10 @@ public class FetchAddressIntentService extends IntentService {
 
         // Get the location passed to this service through an extra.
         double[] location = intent.getDoubleArrayExtra(Constants.LOCATION_DATA_EXTRA);
-
+        String keywords = intent.getStringExtra(Constants.LOCATION_NAME_EXTRA);
         // Make sure that the location data was really sent over through an extra. If it wasn't,
         // send an error error message and return.
-        if (location == null) {
+        if (location == null && keywords == null) {
             errorMessage = getString(R.string.no_location_data_provided);
             Log.wtf(TAG, errorMessage);
             deliverResultToReceiver(Constants.FAILURE_RESULT, errorMessage);
@@ -97,7 +97,6 @@ public class FetchAddressIntentService extends IntentService {
         // to alter the presentation of information such as numbers or dates to suit the conventions
         // in the region they describe.
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-
         // Address found using the Geocoder.
         List<Address> addresses = null;
 
@@ -105,10 +104,14 @@ public class FetchAddressIntentService extends IntentService {
             // Using getFromLocation() returns an array of Addresses for the area immediately
             // surrounding the given latitude and longitude. The results are a best guess and are
             // not guaranteed to be accurate.
-            addresses = geocoder.getFromLocation(
-                    location[0],
-                    location[1],
-                    20);
+            if(location != null){
+                addresses = geocoder.getFromLocation(
+                        location[0],
+                        location[1],
+                        20);
+            }else {
+                addresses = geocoder.getFromLocationName(keywords,30);
+            }
         } catch (IOException ioException) {
             // Catch network or other I/O problems.
             errorMessage = getString(R.string.service_not_available);

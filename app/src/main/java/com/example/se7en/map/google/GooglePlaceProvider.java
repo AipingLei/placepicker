@@ -74,7 +74,7 @@ public class GooglePlaceProvider implements IPlaceProvider,OnCompleteListener<Pl
         mActivity = activity;
         mResultReceiver = new AddressResultReceiver(new Handler());
         // Construct a GeoDataClient.
-        mGeoDataClient = Places.getGeoDataClient(activity, null);
+        //mGeoDataClient = Places.getGeoDataClient(activity, null);
         // Construct a PlaceDetectionClient.
         mPlaceDetectionClient = Places.getPlaceDetectionClient(activity, null);
 
@@ -89,23 +89,6 @@ public class GooglePlaceProvider implements IPlaceProvider,OnCompleteListener<Pl
         mPlaceListener = listener;
         Task<PlaceLikelihoodBufferResponse> placeResult = mPlaceDetectionClient.getCurrentPlace(null);
         placeResult.addOnCompleteListener(this);
-        //mPlaceDetectionClient.getCurrentPlace();
-       //one: FusedLocationClient method
-//        mFusedLocationClient.getLastLocation()
-//                .addOnCompleteListener(mActivity, new OnCompleteListener<Location>() {
-//                    @Override
-//                    public void onComplete(@NonNull Task<Location> task) {
-//                        Location location = task.getResult();
-//                        if (task.isSuccessful() && location != null) {
-//                            Place place = new Place();
-//                            place.latitude = location.getLatitude();
-//                            place.longitude = location.getLongitude();
-//                            listener.onPlaceFetched(place);
-//                        } else {
-//                            listener.onPlaceFetchError(task.getException());
-//                        }
-//                    }
-//                });
     }
 
     @Override
@@ -124,27 +107,30 @@ public class GooglePlaceProvider implements IPlaceProvider,OnCompleteListener<Pl
 
     @Override
     public void searchPlaces(String keyWords, IPlacesListener listener) {
-        Task<AutocompletePredictionBufferResponse> results =
-                mGeoDataClient.getAutocompletePredictions(keyWords, toBounds(mLastLatLng,5000),
-                        mPlaceFilter);
+        mPlaceListener = listener;
+        startIntentService(mActivity,keyWords);
 
-        results.addOnCompleteListener(new OnCompleteListener<AutocompletePredictionBufferResponse>() {
-            @Override
-            public void onComplete(@NonNull Task<AutocompletePredictionBufferResponse> task) {
-                AutocompletePredictionBufferResponse response = task.getResult();
-                List<Place> places = new ArrayList<>();
-                List<AutocompletePrediction> predictions =  DataBufferUtils.freezeAndClose(response);
-                for (AutocompletePrediction prediction : predictions) {
-                    Place place = new Place().build(prediction);
-                    places.add(place);
-                }
-                if (places.size() > 0){
-                    mLastLatLng = new LatLng(places.get(0).latitude,places.get(0).longitude);
-                }
-                mPlaceListener.onPlacesFetched(places);
-                response.release();
-            }
-        });
+//        Task<AutocompletePredictionBufferResponse> results =
+//                mGeoDataClient.getAutocompletePredictions(keyWords, toBounds(mLastLatLng,5000),
+//                        mPlaceFilter);
+
+//        results.addOnCompleteListener(new OnCompleteListener<AutocompletePredictionBufferResponse>() {
+//            @Override
+//            public void onComplete(@NonNull Task<AutocompletePredictionBufferResponse> task) {
+//                AutocompletePredictionBufferResponse response = task.getResult();
+//                List<Place> places = new ArrayList<>();
+//                List<AutocompletePrediction> predictions =  DataBufferUtils.freezeAndClose(response);
+//                for (AutocompletePrediction prediction : predictions) {
+//                    Place place = new Place().build(prediction);
+//                    places.add(place);
+//                }
+//                if (places.size() > 0){
+//                    mLastLatLng = new LatLng(places.get(0).latitude,places.get(0).longitude);
+//                }
+//                mPlaceListener.onPlacesFetched(places);
+//                response.release();
+//            }
+//        });
     }
 
     public LatLngBounds toBounds(LatLng center, double radiusInMeters) {
@@ -179,6 +165,25 @@ public class GooglePlaceProvider implements IPlaceProvider,OnCompleteListener<Pl
 
         // Pass the location data as an extra to the service.
         intent.putExtra(Constants.LOCATION_DATA_EXTRA, location);
+        // Start the service. If the service isn't already running, it is instantiated and started
+        // (creating a process for it if needed); if it is running then it remains running. The
+        // service kills itself automatically once all intents are processed.
+        context.startService(intent);
+    }
+
+    /**
+     * Creates an intent, adds location data to it as an extra, and starts the intent service for
+     * fetching an address.
+     */
+    private void startIntentService(Context context, String name) {
+        // Create an intent for passing to the intent service responsible for fetching the address.
+        Intent intent = new Intent(context, FetchAddressIntentService.class);
+
+        // Pass the result receiver as an extra to the service.
+        intent.putExtra(Constants.RECEIVER, mResultReceiver);
+
+        // Pass the location data as an extra to the service.
+        intent.putExtra(Constants.LOCATION_NAME_EXTRA, name);
         // Start the service. If the service isn't already running, it is instantiated and started
         // (creating a process for it if needed); if it is running then it remains running. The
         // service kills itself automatically once all intents are processed.

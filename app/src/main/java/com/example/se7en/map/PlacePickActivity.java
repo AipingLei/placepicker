@@ -150,7 +150,7 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
 
     private void initPlaceProvider(Bundle savedInstanceState) {
         Intent intent = getIntent();
-        int type = intent.getIntExtra(START_TYPE, GD_MAP);
+        int type = intent.getIntExtra(START_TYPE, GOOGLE_MAP);
         if (type == GOOGLE_MAP) {
             mPlaceProvider = new GooglePlaceProvider(this);
             mMapContainer = new GoogleMapContainer(this);

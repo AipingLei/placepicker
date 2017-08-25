@@ -10,6 +10,8 @@ public final class Constants {
         ".RESULT_DATA_KEY";
     public static final String LOCATION_DATA_EXTRA = PACKAGE_NAME +
         ".LOCATION_DATA_EXTRA";
+    public static final String LOCATION_NAME_EXTRA = PACKAGE_NAME +
+            ".LOCATION_NAME_EXTRA";
 
 //    No location data provided – The intent extras do not include the Location object that is required for reverse geocoding.
 //    Invalid latitude or longitude used – The latitude and/or longitude values that are provided in the Location object are invalid.
