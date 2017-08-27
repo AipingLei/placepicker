@@ -53,7 +53,7 @@
         <service android:name="com.amap.api.location.APSService"></service>
 
         <service
-            android:name=".FetchAddressIntentService"
+            android:name=".google.service.FetchAddressIntentService"
             android:exported="false"/>
 
     </application>

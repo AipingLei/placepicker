@@ -1,4 +1,4 @@
-package com.example.se7en.map;
+package com.example.se7en.map.observer;
 
 
 import com.example.se7en.map.model.Place;

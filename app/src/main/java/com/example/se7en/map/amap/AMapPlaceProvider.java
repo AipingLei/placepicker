@@ -1,6 +1,8 @@
 package com.example.se7en.map.amap;
 
 
+import android.util.Log;
+
 import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
@@ -16,9 +18,10 @@ import com.amap.api.services.geocoder.RegeocodeResult;
 import com.amap.api.services.poisearch.PoiResult;
 import com.amap.api.services.poisearch.PoiSearch;
 import com.example.se7en.map.IPlaceProvider;
-import com.example.se7en.map.IPlacesListener;
+import com.example.se7en.map.observer.IPlacesListener;
 import com.example.se7en.map.PlacePickActivity;
 import com.example.se7en.map.model.Place;
+import com.example.se7en.map.model.PlaceAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,10 +43,9 @@ public class AMapPlaceProvider implements IPlaceProvider, AMapLocationListener, 
 
     public static  final  int PAGE_SIZE = 20;
 
-    private Place mLastPlace;
+    private Place mCurrentPlace;
 
     private PoiSearch.Query query;
-
 
     public AMapPlaceProvider(PlacePickActivity activity){
         mActivity = activity;
@@ -53,6 +55,7 @@ public class AMapPlaceProvider implements IPlaceProvider, AMapLocationListener, 
         mLocationOption = new AMapLocationClientOption();
         mLocationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
         mLocationOption.setMockEnable(false);
+        mLocationOption.setOnceLocationLatest(true);
         mLocationOption.setHttpTimeOut(20000);
 
         mLocationClient.setLocationOption(mLocationOption);
@@ -60,19 +63,26 @@ public class AMapPlaceProvider implements IPlaceProvider, AMapLocationListener, 
 
 
     @Override
-    public void fetchCurrentPlace(IPlacesListener listener) {
+    public IPlaceProvider setListener(IPlacesListener listener) {
         mPlacesListener = listener;
+        return this;
+    }
+
+    @Override
+    public void currentNearby() {
+        if (mPlacesListener == null) throw  new  NullPointerException("should set a PlaceListener first");
         mLocationOption.setOnceLocationLatest(true);
         mLocationClient.startLocation();
     }
 
     @Override
-    public void searchPlaces(double latitude, double longitude, IPlacesListener listener) {
+    public void nearbySearch(double latitude, double longitude) {
+        if (mPlacesListener == null) throw  new  NullPointerException("should set a PlaceListener first");
+        if (mCurrentPlace == null) return;
         if (geocoderSearch == null){
             geocoderSearch = new GeocodeSearch(mActivity);
             geocoderSearch.setOnGeocodeSearchListener(this);
         }
-        mPlacesListener = listener;
         LatLonPoint latLonPoint = new LatLonPoint(latitude,longitude);
         RegeocodeQuery query = new RegeocodeQuery(latLonPoint, 1000,
                 GeocodeSearch.AMAP);
@@ -82,9 +92,10 @@ public class AMapPlaceProvider implements IPlaceProvider, AMapLocationListener, 
     }
 
     @Override
-    public void searchPlaces(String keyWords, IPlacesListener listener) {
-        mPlacesListener = listener;
-        query = new PoiSearch.Query(keyWords, "", mLastPlace.city);// 第一个参数表示搜索字符串，第二个参数表示poi搜索类型，第三个参数表示poi搜索区域（空字符串代表全国）
+    public void textSearch(String keyWords) {
+        if (mPlacesListener == null) throw  new  NullPointerException("should set a PlaceListener first");
+        if (mCurrentPlace == null) return;
+        query = new PoiSearch.Query(keyWords, "", mCurrentPlace.city);// 第一个参数表示搜索字符串，第二个参数表示poi搜索类型，第三个参数表示poi搜索区域（空字符串代表全国）
         query.setPageSize(10);// 设置每页最多返回多少条poiitem
         query.setPageNum(currentPage);// 设置查第一页
         PoiSearch poiSearch = new PoiSearch(mActivity, query);
@@ -105,15 +116,17 @@ public class AMapPlaceProvider implements IPlaceProvider, AMapLocationListener, 
     @Override
     public void onLocationChanged(AMapLocation aMapLocation) {
         if (aMapLocation != null) {
-//            if (aMapLocation.getErrorCode() == 0) {
-//                    mLastPlace = new Place().build(aMapLocation);
-//                    searchPlaces(mLastPlace.latitude,mLastPlace.longitude,mPlacesListener);
-//            }else {
-//                //定位失败时，可通过ErrCode（错误码）信息来确定失败的原因，errInfo是错误信息，详见错误码表。
-//                Log.e("AmapError","location Error, ErrCode:"
-//                        + aMapLocation.getErrorCode() + ", errInfo:"
-//                        + aMapLocation.getErrorInfo());
-//            }
+            if (aMapLocation.getErrorCode() == 0) {
+                    mCurrentPlace = PlaceAdapter.build(aMapLocation);
+                    nearbySearch(mCurrentPlace.latitude,mCurrentPlace.longitude);
+                    mLocationClient.unRegisterLocationListener(this);
+                    mLocationClient.stopLocation();
+            }else {
+                //定位失败时，可通过ErrCode（错误码）信息来确定失败的原因，errInfo是错误信息，详见错误码表。
+                Log.e("AmapError","location Error, ErrCode:"
+                        + aMapLocation.getErrorCode() + ", errInfo:"
+                        + aMapLocation.getErrorInfo());
+            }
         }
     }
 
@@ -128,12 +141,11 @@ public class AMapPlaceProvider implements IPlaceProvider, AMapLocationListener, 
                 if (poiItems != null && poiItems.size() > 0){
                     List<Place> places = new ArrayList<>();
                     for (PoiItem poi :poiItems){
-                        Place place = new Place().build(poi);
+                        Place place = PlaceAdapter.build(poi);
                         place.city = sCity;
                         place.cityCode = sCityCode;
                         places.add(place);
                     }
-                    mLastPlace = places.get(0);
                     mPlacesListener.onPlacesFetched(places);
                 }
             } else {
@@ -179,10 +191,9 @@ public class AMapPlaceProvider implements IPlaceProvider, AMapLocationListener, 
         if (poiItems == null ||poiItems.size() == 0) return null;
         List<Place> places = new ArrayList<>();
         for (PoiItem poi : poiItems){
-            Place place = new Place().build(poi);
+            Place place = PlaceAdapter.build(poi);
             places.add(place);
         }
-        mLastPlace = places.get(0);
         return  places;
     }
 

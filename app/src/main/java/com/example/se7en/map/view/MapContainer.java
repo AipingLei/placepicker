@@ -2,8 +2,9 @@ package com.example.se7en.map.view;
 
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 
-import com.example.se7en.map.ICameraChangeListener;
+import com.example.se7en.map.observer.ICameraChangeListener;
 
 
 /**
@@ -18,7 +19,7 @@ public interface MapContainer<T extends View> {
 
     T getMapView();
 
-    void onCreate(Bundle savedInstanceState);
+    void onCreate(Bundle savedInstanceState, ViewGroup parent);
 
     void onResume();
 
@@ -31,6 +32,8 @@ public interface MapContainer<T extends View> {
     void onStop();
 
     void moveToLocation(double latitude, double longitude);
+
+    void setCurrentLocation(double latitude, double longitude);
 
     void setFocusChangeListener(ICameraChangeListener listener);
 

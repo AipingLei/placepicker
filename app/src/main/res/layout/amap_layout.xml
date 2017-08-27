@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/map_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_collapseMode="parallax"
+    app:layout_collapseParallaxMultiplier="0.6">
+    <com.amap.api.maps.MapView
+        android:id="@+id/map_view"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:layout_below="@+id/main_lay"
+        android:clickable="true"
+        android:enabled="true"
+        android:focusable="true"/>
+    <ImageView
+        android:id="@+id/center_marker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:src="@drawable/aky"
+        />
+    <ImageView
+        android:id="@+id/current_position"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        android:layout_margin="10dp"
+        android:src="@drawable/cur_location" />
+</FrameLayout>

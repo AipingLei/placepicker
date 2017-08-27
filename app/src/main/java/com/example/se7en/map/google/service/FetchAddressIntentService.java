@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.se7en.map;
+package com.example.se7en.map.google.service;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -25,6 +25,9 @@ import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.text.TextUtils;
 import android.util.Log;
+
+import com.example.se7en.map.Constants;
+import com.example.se7en.map.R;
 
 import java.io.IOException;
 import java.util.ArrayList;

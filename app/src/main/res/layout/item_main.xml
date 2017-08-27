@@ -12,8 +12,9 @@
         android:textSize="14sp"
         android:layout_alignParentLeft="true"
         android:layout_marginLeft="14dp"
-        android:text="midnight club"
+        android:layout_marginRight="14dp"
         android:layout_marginTop="13dp"
+        android:text="midnight club"
         android:textColor="#ffffff"
         android:gravity="center" />
 
@@ -26,6 +27,7 @@
         android:layout_alignParentLeft="true"
         android:layout_below="@+id/tv_name"
         android:layout_marginLeft="14dp"
+        android:layout_marginRight="14dp"
         android:text="Moscow, Russia"
         android:textColor="#79798e"
         android:gravity="center" />

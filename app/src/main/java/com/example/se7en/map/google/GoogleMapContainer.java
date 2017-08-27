@@ -1,19 +1,27 @@
 package com.example.se7en.map.google;
 
 
+import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 
-import com.example.se7en.map.ICameraChangeListener;
 import com.example.se7en.map.PlacePickActivity;
+import com.example.se7en.map.R;
+import com.example.se7en.map.observer.ICameraChangeListener;
 import com.example.se7en.map.view.MapContainer;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+
 
 /**
  * description: describe the class
@@ -21,38 +29,49 @@ import com.google.android.gms.maps.model.MarkerOptions;
  * create date: 2017/8/23
  * update date: 2017/8/23
  * version: 1.0
-*/
+ */
 
-public class GoogleMapContainer implements MapContainer<MapView>,OnMapReadyCallback {
+public class GoogleMapContainer implements MapContainer<FrameLayout>, OnMapReadyCallback, GoogleMap.OnCameraIdleListener {
 
-    private MapView mMapView;
+    ImageView mCenterMarker;
+    MapView mMapView;
+    ImageView mCurrentControl;
 
     private PlacePickActivity mActivity;
 
     private GoogleMap mGoogleMap;
 
-    private double[] mLocation;
+    private double[] mCurrentPosition;
 
-    public GoogleMapContainer(PlacePickActivity aActivity){
+    private FrameLayout mapLayout;
+
+    private ICameraChangeListener mCameraChangeListener;
+
+
+    public GoogleMapContainer(PlacePickActivity aActivity) {
         mActivity = aActivity;
     }
 
     @Override
-    public MapView getMapView() {
-        return mMapView;
+    public FrameLayout getMapView() {
+        return mapLayout;
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-
-        mMapView = new MapView(mActivity);
-        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
-        mMapView.setLayoutParams(params);
-        mMapView.setClickable(true);
-        mMapView.setEnabled(true);
-        mMapView.setFocusable(true);
-
+    public void onCreate(Bundle savedInstanceState, ViewGroup parent) {
+        mapLayout = (FrameLayout) mActivity.getLayoutInflater().inflate(R.layout.google_map_layout, parent, false);
+        mCenterMarker = (ImageView)mapLayout.findViewById(R.id.center_marker);
+        mCurrentControl = (ImageView)mapLayout.findViewById(R.id.current_position);
+        mMapView = (MapView)mapLayout.findViewById(R.id.map_view);
         mMapView.onCreate(savedInstanceState);
+        mCurrentControl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mCurrentPosition != null){
+                    moveToLocation(mCurrentPosition[0],mCurrentPosition[1]);
+                }
+            }
+        });
         mMapView.getMapAsync(this);
     }
 
@@ -97,21 +116,17 @@ public class GoogleMapContainer implements MapContainer<MapView>,OnMapReadyCallb
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
         mActivity.onMapReady(this);
-        if (mLocation != null){
-            moveToLocation(mLocation[0],mLocation[1]);
-        }
+        mGoogleMap.setOnCameraIdleListener(this);
     }
 
     @Override
     public void moveToLocation(double latitude, double longitude) {
-        if (mGoogleMap == null){
-            mLocation = new double[2];
-            mLocation[0] = latitude;
-            mLocation[1] = longitude;
+        if (mGoogleMap == null) {
             return;
         }
+
         LatLng place = new LatLng(latitude, longitude);
-        mGoogleMap.addMarker(new MarkerOptions().position(place));
+        //mGoogleMap.addMarker(new MarkerOptions().position(place));
         // Construct a CameraPosition focusing on Mountain View and animate the camera to that position.
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(place)      // Sets the center of the map to Mountain View
@@ -123,7 +138,46 @@ public class GoogleMapContainer implements MapContainer<MapView>,OnMapReadyCallb
     }
 
     @Override
-    public void setFocusChangeListener(ICameraChangeListener listener) {
-
+    public void setCurrentLocation(double latitude, double longitude) {
+        if (mCurrentPosition == null){
+            mCurrentPosition = new double[2];
+            mCurrentPosition[0] = latitude;
+            mCurrentPosition[1] = longitude;
+            mCenterMarker.setVisibility(View.VISIBLE);
+            float y = mCenterMarker.getY();
+            int height = mCenterMarker.getHeight();
+            mCenterMarker.setY(y-height/2);
+            mGoogleMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(latitude, longitude))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.location)));
+            moveToLocation(latitude,longitude);
+        }
     }
+
+    @Override
+    public void setFocusChangeListener(ICameraChangeListener listener) {
+        mCameraChangeListener = listener;
+    }
+
+    @Override
+    public void onCameraIdle() {
+        CameraPosition position = mGoogleMap.getCameraPosition();
+        double latitude = position.target.latitude;
+        double longitude = position.target.longitude;
+        Log.e("Google Map Container",  "latitude = " + latitude+  "longitude = "+ longitude);
+        mCameraChangeListener.onCameraChangeFinish(position.target.latitude,position.target.longitude);
+    }
+
+//    /**
+//     * 在屏幕中心添加一个Marker
+//     */
+//    private void addMarkerInScreenCenter() {
+//        LatLng latLng = mGoogleMap.getCameraPosition().target;
+//        Point screenPosition = mGoogleMap.getProjection().toScreenLocation(latLng);
+//        screenMarker = mGoogleMap.addMarker(new MarkerOptions()
+//                .anchor(0.5f,0.5f)
+//                .icon(BitmapDescriptorFactory.fromResource(R.drawable.aky)));
+//        screenMarker.setPositionByPixels(screenPosition.x,screenPosition.y);
+//        screenMarker.set
+//    }
 }

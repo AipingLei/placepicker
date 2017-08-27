@@ -30,8 +30,12 @@ import com.example.se7en.map.amap.AMapPlaceProvider;
 import com.example.se7en.map.google.GoogleMapContainer;
 import com.example.se7en.map.google.GooglePlaceProvider;
 import com.example.se7en.map.model.Place;
+import com.example.se7en.map.observer.ICameraChangeListener;
+import com.example.se7en.map.observer.IMapReadyCallback;
+import com.example.se7en.map.observer.IPlacesListener;
 import com.example.se7en.map.view.MapContainer;
 import com.example.se7en.map.view.RecyclerAdapter;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.util.List;
 
@@ -62,8 +66,6 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
     CoordinatorLayout searchCoordinator;
     @Bind(R.id.search_collapsing)
     CollapsingToolbarLayout searchCollapsing;
-    @Bind(R.id.map_layout)
-    FrameLayout mapLayout;
 
     public static final int GOOGLE_MAP = 0;
 
@@ -77,6 +79,7 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
 
     private IPlaceProvider mPlaceProvider;
 
+
     RecyclerAdapter mAdapter;
 
 
@@ -85,22 +88,13 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         ButterKnife.bind(this);
-        initView();
         initPlaceProvider(savedInstanceState);
+        initView();
     }
 
     private String mCurrentText;
 
     private void initView() {
-        searchView.setOnSearchClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                searchTitle.setVisibility(View.GONE);
-                pickDone.setVisibility(View.GONE);
-                searchCollapsing.setMinimumHeight(0);
-                searchCollapsing.setVisibility(View.GONE);
-            }
-        });
 
         CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) searchAppbar.getLayoutParams();
         AppBarLayout.Behavior behavior = new AppBarLayout.Behavior();
@@ -111,6 +105,16 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
             }
         });
         params.setBehavior(behavior);
+
+        searchView.setOnSearchClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                searchTitle.setVisibility(View.GONE);
+                pickDone.setVisibility(View.GONE);
+                searchCollapsing.setMinimumHeight(0);
+                searchCollapsing.setVisibility(View.GONE);
+            }
+        });
 
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -123,7 +127,7 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
                 if (TextUtils.isEmpty(newText)) return false;
                 if (mCurrentText == null || !mCurrentText.equals(newText)){
                     mCurrentText = newText;
-                    mPlaceProvider.searchPlaces(newText,PlacePickActivity.this);
+                    mPlaceProvider.textSearch(newText);
                     return true;
                 }
                 return false;
@@ -150,28 +154,25 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
 
     private void initPlaceProvider(Bundle savedInstanceState) {
         Intent intent = getIntent();
-        int type = intent.getIntExtra(START_TYPE, GOOGLE_MAP);
+        int type = intent.getIntExtra(START_TYPE, GD_MAP);
         if (type == GOOGLE_MAP) {
-            mPlaceProvider = new GooglePlaceProvider(this);
+            mPlaceProvider = new GooglePlaceProvider(this).setListener(this);
             mMapContainer = new GoogleMapContainer(this);
             mMapContainer.setFocusChangeListener(this);
-            mMapContainer.onCreate(savedInstanceState);
+            mMapContainer.onCreate(savedInstanceState,searchCollapsing);
         } else if (type == GD_MAP) {
             //TODO GD map
-            mPlaceProvider = new AMapPlaceProvider(this);
+            mPlaceProvider = new AMapPlaceProvider(this).setListener(this);
             mMapContainer = new AMapContainer(this);
             mMapContainer.setFocusChangeListener(this);
-            mMapContainer.onCreate(savedInstanceState);
+            mMapContainer.onCreate(savedInstanceState,searchCollapsing);
         } else {
             Log.e(TAG, "none map service founded, you should define a map provider (GD_MAP or GOOGLE_MAP)");
         }
         if (mPlaceProvider == null) {
             return;
         }
-
-
-
-        //mPlaceProvider.fetchCurrentPlace(this);
+        //mPlaceProvider.currentNearby(this);
     }
 
     @Override
@@ -196,7 +197,7 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
         if (!checkPermissions()) {
             requestPermissions();
         } else {
-            mPlaceProvider.fetchCurrentPlace(this);
+            mPlaceProvider.currentNearby();
         }
     }
 
@@ -215,11 +216,15 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
 
 
     @Override
-    public void onPlacesFetched(List<Place> place) {
-        if (mRecyclerView == null || place.size() == 0) return;
-        mData = place;
-        //mMapContainer.moveToLocation(mData.get(0).latitude, mData.get(0).longitude);
+    public void onPlacesFetched(List<Place> places) {
+        if (mRecyclerView == null || places.size() == 0) return;
+        if (mData == null){
+            Place place = places.get(0);
+            mMapContainer.setCurrentLocation(place.latitude,place.longitude);
+        }
+        mData = places;
         mAdapter.setData(mData);
+        mAdapter.setSelectIndex(0);
         mRecyclerView.setVisibility(View.VISIBLE);
         mAdapter.notifyDataSetChanged();
     }
@@ -232,11 +237,12 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
     @Override
     public void onMapReady(MapContainer container) {
         View view = container.getMapView();
-        mapLayout.addView(view,view.getLayoutParams());
+        searchCollapsing.addView(view,view.getLayoutParams());
     }
 
     @Override
     public void onPlaceClick(View view, int position) {
+        searchView.setQuery("",false);
         searchView.setIconified(true);
         Place place = mAdapter.get(position);
         eventProducer = mAdapter.hashCode();
@@ -247,22 +253,11 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
     @Override
     public void onCameraChangeFinish(double latitude, double longitude) {
         if (eventProducer != mAdapter.hashCode()){
-            mPlaceProvider.searchPlaces(latitude,longitude,this);
+            mPlaceProvider.nearbySearch(latitude,longitude);
         }else {
             eventProducer = 0;
         }
     }
-
-//    public Place find(double latitude, double longitude){
-//        if (mData == null) return  null;
-//        for (Place place: mData){
-//            if (place.latitude == latitude && place.longitude == longitude){
-//                return place;
-//            }
-//        }
-//        return  null;
-//    }
-
 
     @Override
     public void onBackPressed() {
@@ -354,7 +349,7 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
                 Log.i(TAG, "User interaction was cancelled.");
             } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission granted.
-                mPlaceProvider.fetchCurrentPlace(this);
+                mPlaceProvider.currentNearby();
             } else {
                 // Permission denied.
 

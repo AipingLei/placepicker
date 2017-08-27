@@ -1,6 +1,7 @@
 package com.example.se7en.map;
 
 
+import com.example.se7en.map.observer.IPlacesListener;
 
 /**
  * description: describe the class
@@ -11,11 +12,13 @@ package com.example.se7en.map;
 */
 public interface IPlaceProvider {
 
-    void fetchCurrentPlace(IPlacesListener listener);
+    IPlaceProvider setListener(IPlacesListener listener);
 
-    void searchPlaces(double latitude, double longitude, IPlacesListener listener);
+    void currentNearby();
 
-    void searchPlaces(String keyWords,  IPlacesListener listener);
+    void nearbySearch(double latitude, double longitude);
+
+    void textSearch(String keyWords);
 
     void destroyed();
 

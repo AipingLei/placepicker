@@ -70,23 +70,9 @@
             <android.support.design.widget.CollapsingToolbarLayout
                 android:id="@+id/search_collapsing"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="300dp"
                 android:minHeight="100dp"
                 app:layout_scrollFlags="scroll|exitUntilCollapsed|enterAlways">
-
-                <FrameLayout
-                    android:id="@+id/map_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="300dp"
-                    app:layout_collapseMode="parallax"
-                    app:layout_collapseParallaxMultiplier="0.6"></FrameLayout>
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|right"
-                    android:layout_margin="10dp"
-                    android:src="@drawable/cur_location" />
 
             </android.support.design.widget.CollapsingToolbarLayout>
         </android.support.design.widget.AppBarLayout>

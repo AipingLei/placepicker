@@ -18,6 +18,11 @@ import java.util.List;
 public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.MyViewHolder> {
     private Context mContext;
     private List<Place> mData;
+
+    public void setSelectIndex(int selectIndex) {
+        this.selectIndex = selectIndex;
+    }
+
     private int selectIndex = 0;
 
     public RecyclerAdapter(Context context) {
