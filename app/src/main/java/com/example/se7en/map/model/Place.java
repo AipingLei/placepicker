@@ -1,7 +1,11 @@
 package com.example.se7en.map.model;
 
 
-public class Place {
+import java.io.Serializable;
+
+public class Place implements Serializable{
+
+    public String placeID;
 
     public String name;
 
@@ -11,11 +15,13 @@ public class Place {
 
     public String country;
 
+    public String countryCode;
+
     public double longitude;
 
     public String city;
 
-    public String cityCode;
+    public transient String province;
 
 
 }

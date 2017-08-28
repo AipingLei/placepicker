@@ -34,4 +34,10 @@ public interface GooglePlaceService {
             @Query("language") String language,
             @Query("key") String key);
 
+    @GET("/maps/api/place/details/json")
+    Observable<GooglePlacesSearch.DetailResponse> details(
+            @Query("placeid") String placeid,
+            @Query("language") String language,
+            @Query("key") String key);
+
 }

@@ -12,4 +12,6 @@ public interface IPlacesListener {
 
     void onPlacesFetchError(String errorMsg);
 
+    void onPlacesDetailFetched(Place place);
+
 }

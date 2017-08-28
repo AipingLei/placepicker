@@ -15,8 +15,6 @@
 
 package com.example.se7en.map.google.model;
 
-import com.google.maps.android.geometry.Bounds;
-
 /** The geometry of a Geocoding result. */
 public class Geometry {
   /**

@@ -48,7 +48,7 @@ public class PlacesSearchResult {
   public URL icon;
 
   /** A textual identifier that uniquely identifies a place. */
-  public String placeId;
+  public String place_id;
 
 //  /** sThe scope of the placeId. */
 //  public PlaceIdScope scope;

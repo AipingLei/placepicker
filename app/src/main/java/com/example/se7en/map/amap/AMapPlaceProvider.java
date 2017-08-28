@@ -7,6 +7,8 @@ import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
+import com.amap.api.location.CoordinateConverter;
+import com.amap.api.maps.model.LatLng;
 import com.amap.api.services.core.AMapException;
 import com.amap.api.services.core.LatLonPoint;
 import com.amap.api.services.core.PoiItem;
@@ -25,6 +27,7 @@ import com.example.se7en.map.model.PlaceAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class AMapPlaceProvider implements IPlaceProvider, AMapLocationListener, GeocodeSearch.OnGeocodeSearchListener, PoiSearch.OnPoiSearchListener {
 
@@ -78,29 +81,35 @@ public class AMapPlaceProvider implements IPlaceProvider, AMapLocationListener, 
     @Override
     public void nearbySearch(double latitude, double longitude) {
         if (mPlacesListener == null) throw  new  NullPointerException("should set a PlaceListener first");
-        if (mCurrentPlace == null) return;
         if (geocoderSearch == null){
             geocoderSearch = new GeocodeSearch(mActivity);
             geocoderSearch.setOnGeocodeSearchListener(this);
         }
         LatLonPoint latLonPoint = new LatLonPoint(latitude,longitude);
-        RegeocodeQuery query = new RegeocodeQuery(latLonPoint, 1000,
+
+        // the first param is Latlng，second is radius to search, the last is Latlng type;
+        RegeocodeQuery query = new RegeocodeQuery(latLonPoint, 50000,
                 GeocodeSearch.AMAP);
-        // 第一个参数表示一个Latlng，第二参数表示范围多少米，第三个参数表示是火系坐标系还是GPS原生坐标系
-        geocoderSearch.getFromLocationAsyn(query);// 设置异步逆地理编码请求
+        geocoderSearch.getFromLocationAsyn(query);
 
     }
 
     @Override
     public void textSearch(String keyWords) {
         if (mPlacesListener == null) throw  new  NullPointerException("should set a PlaceListener first");
-        if (mCurrentPlace == null) return;
-        query = new PoiSearch.Query(keyWords, "", mCurrentPlace.city);// 第一个参数表示搜索字符串，第二个参数表示poi搜索类型，第三个参数表示poi搜索区域（空字符串代表全国）
-        query.setPageSize(10);// 设置每页最多返回多少条poiitem
-        query.setPageNum(currentPage);// 设置查第一页
+        String city = mCurrentPlace == null ? "" : mCurrentPlace.city;
+        query = new PoiSearch.Query(keyWords, "", city);
+        query.setPageSize(20);//
+        query.setPageNum(currentPage);//
         PoiSearch poiSearch = new PoiSearch(mActivity, query);
         poiSearch.setOnPoiSearchListener(this);
         poiSearch.searchPOIAsyn();
+    }
+
+    @Override
+    public void placeDetail(Place place) {
+        //There is no need to get AMap Detail info/
+        mPlacesListener.onPlacesDetailFetched(place);
     }
 
     @Override
@@ -136,14 +145,16 @@ public class AMapPlaceProvider implements IPlaceProvider, AMapLocationListener, 
             if (result != null && result.getRegeocodeAddress() != null
                     && result.getRegeocodeAddress().getFormatAddress() != null) {
                 String  sCity = result.getRegeocodeAddress().getCity();
-                String  sCityCode = result.getRegeocodeAddress().getCityCode();
+                String  sProvince = result.getRegeocodeAddress().getProvince();
                 List<PoiItem> poiItems = result.getRegeocodeAddress().getPois();
                 if (poiItems != null && poiItems.size() > 0){
                     List<Place> places = new ArrayList<>();
                     for (PoiItem poi :poiItems){
                         Place place = PlaceAdapter.build(poi);
                         place.city = sCity;
-                        place.cityCode = sCityCode;
+                        place.province =sProvince;
+                        place.country = Locale.getDefault().getDisplayCountry();
+                        place.countryCode = Locale.getDefault().getCountry();
                         places.add(place);
                     }
                     mPlacesListener.onPlacesFetched(places);

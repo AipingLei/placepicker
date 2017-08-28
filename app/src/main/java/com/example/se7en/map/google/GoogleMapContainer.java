@@ -31,7 +31,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
  * version: 1.0
  */
 
-public class GoogleMapContainer implements MapContainer<FrameLayout>, OnMapReadyCallback, GoogleMap.OnCameraIdleListener {
+public class GoogleMapContainer implements MapContainer<FrameLayout>, OnMapReadyCallback, GoogleMap.OnCameraMoveStartedListener, GoogleMap.OnCameraIdleListener {
 
     ImageView mCenterMarker;
     MapView mMapView;
@@ -117,6 +117,7 @@ public class GoogleMapContainer implements MapContainer<FrameLayout>, OnMapReady
         mGoogleMap = googleMap;
         mActivity.onMapReady(this);
         mGoogleMap.setOnCameraIdleListener(this);
+        mGoogleMap.setOnCameraMoveStartedListener(this);
     }
 
     @Override
@@ -159,13 +160,38 @@ public class GoogleMapContainer implements MapContainer<FrameLayout>, OnMapReady
         mCameraChangeListener = listener;
     }
 
+//    @Override
+//    public void onCameraIdle() {
+//        if ()
+//        CameraPosition position = mGoogleMap.getCameraPosition();
+//        double latitude = position.target.latitude;
+//        double longitude = position.target.longitude;
+//        Log.e("Google Map Container",  "latitude = " + latitude+  "longitude = "+ longitude);
+//    }
+
+    public boolean hasUnConsumingMoveEvent;
+
+    @Override
+    public void onCameraMoveStarted(int reason) {
+        if (reason == GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE) {
+            hasUnConsumingMoveEvent = true;
+        } else if (reason == GoogleMap.OnCameraMoveStartedListener
+                .REASON_API_ANIMATION) {
+        } else if (reason == GoogleMap.OnCameraMoveStartedListener
+                .REASON_DEVELOPER_ANIMATION) {
+        }
+    }
+
     @Override
     public void onCameraIdle() {
-        CameraPosition position = mGoogleMap.getCameraPosition();
-        double latitude = position.target.latitude;
-        double longitude = position.target.longitude;
-        Log.e("Google Map Container",  "latitude = " + latitude+  "longitude = "+ longitude);
-        mCameraChangeListener.onCameraChangeFinish(position.target.latitude,position.target.longitude);
+        if (hasUnConsumingMoveEvent){
+            hasUnConsumingMoveEvent = false;
+            CameraPosition position = mGoogleMap.getCameraPosition();
+            double latitude = position.target.latitude;
+            double longitude = position.target.longitude;
+            Log.e("Google Map Container",  "latitude = " + latitude+  "longitude = "+ longitude);
+            mCameraChangeListener.onCameraChangeFinish(latitude,longitude);
+        }
     }
 
 //    /**

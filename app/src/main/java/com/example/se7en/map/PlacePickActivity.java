@@ -20,7 +20,6 @@ import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
 import android.widget.TextView;
@@ -35,17 +34,19 @@ import com.example.se7en.map.observer.IMapReadyCallback;
 import com.example.se7en.map.observer.IPlacesListener;
 import com.example.se7en.map.view.MapContainer;
 import com.example.se7en.map.view.RecyclerAdapter;
-import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 
-public class PlacePickActivity extends AppCompatActivity implements IPlacesListener, IMapReadyCallback,RecyclerAdapter.OnItemClickListener,ICameraChangeListener {
+public class PlacePickActivity extends AppCompatActivity implements IPlacesListener, IMapReadyCallback, RecyclerAdapter.OnItemClickListener, ICameraChangeListener {
 
     private static final String TAG = "PlacePickActivity";
-    private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
+    public static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
+    public static final int PLACE_PICKED = 31;
+    public static final int PLACE_PICKED_CANCEL = 32;
     @Bind(R.id.search_title)
     TextView searchTitle;
     @Bind(R.id.pick_done)
@@ -56,8 +57,6 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
     RelativeLayout searchRl;
     @Bind(R.id.my_toolbar)
     Toolbar myToolbar;
-    //    @Bind(R.id.map_view)
-//    MapView mapView;
     @Bind(R.id.recyclerview)
     RecyclerView mRecyclerView;
     @Bind(R.id.search_appbar)
@@ -72,6 +71,9 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
     public static final int GD_MAP = 1;
 
     public static final String START_TYPE = "start_type";
+
+    public static final String SELECT_PLACE = "select_place";
+
     //private GoogleMap mGoogleMap;
     private List<Place> mData;
 
@@ -125,7 +127,7 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
             @Override
             public boolean onQueryTextChange(String newText) {
                 if (TextUtils.isEmpty(newText)) return false;
-                if (mCurrentText == null || !mCurrentText.equals(newText)){
+                if (mCurrentText == null || !mCurrentText.equals(newText)) {
                     mCurrentText = newText;
                     mPlaceProvider.textSearch(newText);
                     return true;
@@ -159,13 +161,13 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
             mPlaceProvider = new GooglePlaceProvider(this).setListener(this);
             mMapContainer = new GoogleMapContainer(this);
             mMapContainer.setFocusChangeListener(this);
-            mMapContainer.onCreate(savedInstanceState,searchCollapsing);
+            mMapContainer.onCreate(savedInstanceState, searchCollapsing);
         } else if (type == GD_MAP) {
             //TODO GD map
             mPlaceProvider = new AMapPlaceProvider(this).setListener(this);
             mMapContainer = new AMapContainer(this);
             mMapContainer.setFocusChangeListener(this);
-            mMapContainer.onCreate(savedInstanceState,searchCollapsing);
+            mMapContainer.onCreate(savedInstanceState, searchCollapsing);
         } else {
             Log.e(TAG, "none map service founded, you should define a map provider (GD_MAP or GOOGLE_MAP)");
         }
@@ -194,17 +196,17 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
     protected void onStart() {
         super.onStart();
         mMapContainer.onStart();
-        if (!checkPermissions()) {
-            requestPermissions();
-        } else {
-            mPlaceProvider.currentNearby();
-        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         mMapContainer.onResume();
+        if (!checkPermissions()) {
+            requestPermissions();
+        } else {
+            mPlaceProvider.currentNearby();
+        }
     }
 
     public static void show(Context context, int type) {
@@ -214,13 +216,14 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
         context.startActivity(intent);
     }
 
+    private Place mSelectPlace;
 
     @Override
     public void onPlacesFetched(List<Place> places) {
         if (mRecyclerView == null || places.size() == 0) return;
-        if (mData == null){
-            Place place = places.get(0);
-            mMapContainer.setCurrentLocation(place.latitude,place.longitude);
+        mSelectPlace = places.get(0);
+        if (mData == null) {
+            mMapContainer.setCurrentLocation(mSelectPlace.latitude, mSelectPlace.longitude);
         }
         mData = places;
         mAdapter.setData(mData);
@@ -235,26 +238,35 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
     }
 
     @Override
+    public void onPlacesDetailFetched(Place place) {
+        Intent intent = new Intent();
+        intent.putExtra(SELECT_PLACE, place);
+        setResult(PLACE_PICKED);
+        finish();
+    }
+
+    @Override
     public void onMapReady(MapContainer container) {
         View view = container.getMapView();
-        searchCollapsing.addView(view,view.getLayoutParams());
+        searchCollapsing.addView(view, view.getLayoutParams());
     }
 
     @Override
     public void onPlaceClick(View view, int position) {
-        searchView.setQuery("",false);
+        searchView.setQuery("", false);
         searchView.setIconified(true);
-        Place place = mAdapter.get(position);
+        mSelectPlace = mAdapter.get(position);
         eventProducer = mAdapter.hashCode();
-        mMapContainer.moveToLocation(place.latitude,place.longitude);
+        mMapContainer.moveToLocation(mSelectPlace.latitude, mSelectPlace.longitude);
     }
+
     private int eventProducer = 0;
 
     @Override
     public void onCameraChangeFinish(double latitude, double longitude) {
-        if (eventProducer != mAdapter.hashCode()){
-            mPlaceProvider.nearbySearch(latitude,longitude);
-        }else {
+        if (eventProducer != mAdapter.hashCode()) {
+            mPlaceProvider.nearbySearch(latitude, longitude);
+        } else {
             eventProducer = 0;
         }
     }
@@ -267,6 +279,7 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
             super.onBackPressed();
         }
     }
+
     /**
      * Return the current state of the permissions needed.
      */
@@ -381,4 +394,10 @@ public class PlacePickActivity extends AppCompatActivity implements IPlacesListe
         }
     }
 
+    @OnClick(R.id.pick_done)
+    public void onViewClicked() {
+        if (mSelectPlace != null){
+            mPlaceProvider.placeDetail(mSelectPlace);
+        }
+    }
 }

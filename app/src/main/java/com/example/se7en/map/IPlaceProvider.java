@@ -1,6 +1,7 @@
 package com.example.se7en.map;
 
 
+import com.example.se7en.map.model.Place;
 import com.example.se7en.map.observer.IPlacesListener;
 
 /**
@@ -19,6 +20,8 @@ public interface IPlaceProvider {
     void nearbySearch(double latitude, double longitude);
 
     void textSearch(String keyWords);
+
+    void placeDetail(Place place);
 
     void destroyed();
 

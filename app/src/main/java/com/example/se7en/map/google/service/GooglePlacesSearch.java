@@ -4,14 +4,13 @@ package com.example.se7en.map.google.service;
 
 import com.example.se7en.map.RetrofitRequest;
 import com.example.se7en.map.google.internel.StringJoin;
+import com.example.se7en.map.google.model.PlaceDetailResult;
+import com.example.se7en.map.google.model.PlacesSearchResult;
 import com.example.se7en.map.observer.IPlacesListener;
 import com.example.se7en.map.google.internel.ApiResponse;
 import com.example.se7en.map.google.model.PlacesSearchResponse;
-import com.example.se7en.map.google.model.PlacesSearchResult;
 import com.example.se7en.map.model.PlaceAdapter;
 
-
-import java.util.Locale;
 
 import rx.Observable;
 import rx.Subscriber;
@@ -96,6 +95,32 @@ public class GooglePlacesSearch extends RetrofitRequest<GooglePlaceService> {
   public GooglePlacesSearch observer(IPlacesListener aPlaceListener) {
     mPlaceListener = aPlaceListener;
     return  this;
+  }
+
+  public void placeDetail(String placeID){
+    mService.details(placeID,language,mApiKey)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(new Subscriber<GooglePlacesSearch.DetailResponse>() {
+              @Override
+              public void onCompleted() {
+
+              }
+
+              @Override
+              public void onError(Throwable e) {
+                mPlaceListener.onPlacesFetchError(e.getMessage());
+              }
+
+              @Override
+              public void onNext(GooglePlacesSearch.DetailResponse response) {
+                if (response.successful()){
+                  mPlaceListener.onPlacesDetailFetched(PlaceAdapter.build(response.getResult()));
+                }else {
+                  mPlaceListener.onPlacesFetchError(response.status+response.errorMessage);
+                }
+              }
+            });
   }
 
   public void nearbySearch(){
@@ -204,5 +229,35 @@ public class GooglePlacesSearch extends RetrofitRequest<GooglePlaceService> {
       return new Exception(status+errorMessage);
     }
   }
+
+  public static  class DetailResponse implements ApiResponse<PlaceDetailResult>{
+
+    public String status;
+
+    public String errorMessage;
+
+    public String formatted_address;
+
+    public PlaceDetailResult result;
+
+    @Override
+    public boolean successful() {
+      return "OK".equals(status) || "ZERO_RESULTS".equals(status);
+    }
+
+    @Override
+    public PlaceDetailResult getResult() {
+      return result;
+    }
+
+    @Override
+    public Exception getError() {
+      if (successful()) {
+        return null;
+      }
+      return new Exception(status+errorMessage);
+    }
+  }
+
 
 }

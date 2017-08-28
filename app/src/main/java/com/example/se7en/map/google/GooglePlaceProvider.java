@@ -97,17 +97,12 @@ public class GooglePlaceProvider implements IPlaceProvider,LocationListener {
                     .keyword(keyWords)
                     .textSearch();
         }
-        //startIntentService(mActivity,keyWords);
     }
 
-//    public LatLngBounds toBounds(LatLng center, double radiusInMeters) {
-//        double distanceFromCenterToCorner = radiusInMeters * Math.sqrt(2.0);
-//        LatLng southwestCorner =
-//                SphericalUtil.computeOffset(center, distanceFromCenterToCorner, 225.0);
-//        LatLng northeastCorner =
-//                SphericalUtil.computeOffset(center, distanceFromCenterToCorner, 45.0);
-//        return new LatLngBounds(southwestCorner, northeastCorner);
-//    }
+    @Override
+    public void placeDetail(Place place) {
+        mSearchEngine.placeDetail(place.placeID);
+    }
 
     @Override
     public void destroyed() {
@@ -136,7 +131,8 @@ public class GooglePlaceProvider implements IPlaceProvider,LocationListener {
 
     @Override
     public void onLocationChanged(Location location) {
-        if (location != null) {
+        float accuracy = location.getAccuracy();
+        if (mCurrentPlace == null && accuracy < 200) {
             mCurrentPlace = new Place();
             mCurrentPlace.latitude = location.getLatitude();
             mCurrentPlace.longitude = location.getLongitude();
